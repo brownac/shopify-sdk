@@ -663,15 +663,22 @@ public class ShopifySdk {
 		return shopifyCustomerRootResponse.getCustomer();
 	}
         
-        public List<ShopifyCustomer> getCustomers(final ShopifyGetCustomersRequest shopifyGetCustomersRequest)
-                throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+        public List<ShopifyCustomer> getCustomers(final ShopifyGetCustomersRequest shopifyGetCustomersRequest) {
             WebTarget target = getWebTarget().path(CUSTOMERS);
-            Map<String, String> props = BeanUtils.describe(shopifyGetCustomersRequest);
-            props.remove("class");
-            for (String key : props.keySet()) {
-                if (props.get(key) != null && !props.get(key).equals("0")) {
-                    target = target.queryParam(convertToCamelCase(key), props.get(key));
-                }
+            if (shopifyGetCustomersRequest.getPage() != 0) {
+                target = target.queryParam(PAGE_QUERY_PARAMETER, shopifyGetCustomersRequest.getPage());
+            }
+            if (shopifyGetCustomersRequest.getLimit() != 0) {
+                target = target.queryParam(LIMIT_QUERY_PARAMETER, shopifyGetCustomersRequest.getLimit());
+            }
+            if (shopifyGetCustomersRequest.getIds() != null) {
+                target = target.queryParam(IDS_QUERY_PARAMETER, String.join( ",", shopifyGetCustomersRequest.getIds()));
+            }
+            if (shopifyGetCustomersRequest.getSinceId() != null) {
+                target = target.queryParam(SINCE_ID_QUERY_PARAMETER, shopifyGetCustomersRequest.getSinceId());
+            }
+            if (shopifyGetCustomersRequest.getCreatedAtMin() != null) {
+                
             }
             Response response = get(target);
             return getCustomers(response);
@@ -797,17 +804,7 @@ public class ShopifySdk {
 	public String getAccessToken() {
 		return accessToken;
 	}
-        
-        private String convertToCamelCase(String input) {
-            Matcher m = Pattern.compile("(?<=[a-z])[A-Z]").matcher(input);
-            StringBuffer sb = new StringBuffer();
-            while (m.find()) {
-                m.appendReplacement(sb, "_" + m.group().toLowerCase());
-            }
-            m.appendTail(sb);
-            return sb.toString();
-        }
-               
+                       
 	private List<ShopifyCustomer> getCustomers(Response response) {
 		ShopifyCustomersRoot shopifyCustomersRootResponse = response.readEntity(ShopifyCustomersRoot.class);
 		return shopifyCustomersRootResponse.getCustomers();
